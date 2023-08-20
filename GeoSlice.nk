@@ -1,0 +1,49 @@
+Group {
+ name GeoSlice1
+ autolabel nuke.thisNode().knob('label').value()
+ selected true
+ addUserKnob {20 Slice}
+ addUserKnob {26 instructions l "" +STARTLINE T "Connect input to a ReadGeo node."}
+ addUserKnob {26 divider l "" +STARTLINE}
+ addUserKnob {41 translate T bounding_box.translate}
+ addUserKnob {41 scaling l scale T bounding_box.scaling}
+ addUserKnob {41 uniform_scale l "uniform scale" T bounding_box.uniform_scale}
+ addUserKnob {41 selectable l "display bounding box" t "if bounding_box.selectable == true:\n\tbounding_box.disable = false\nelse:\n\tbounding_box.disable = true" T bounding_box.selectable}
+ addUserKnob {26 ""}
+ addUserKnob {1 slice_name}
+ slice_name slice
+ addUserKnob {26 ""}
+ addUserKnob {22 submit_geo_slice l "Submit to Geo Slice" T "import sys, os.path, time\n\n\n# update this path with wherever trimesh is\nsys.path.append(\"/usr/home/swinkler/.nuke/ToolSets/\")\nimport trimesh\n\n\n\nstartTime = time.time()\n# user_path = os.environ.get(\"USERPROFILE\")\ninput_node = nuke.thisNode().input(0)\n\n\nif input_node.Class() == \"ReadGeo2\" and input_node.knob(\"file\").value().endswith(\".obj\") and os.path.exists(input_node.knob(\"file\").value()) == True:\n\n\n    geo_file = input_node.knob(\"file\").value()\n    mesh = trimesh.load_mesh(geo_file)\n    slice_name = nuke.thisNode().knob(\"slice_name\").value()\n    translate = nuke.thisNode().knob(\"translate\").value()\n    scale = nuke.thisNode().knob(\"scaling\").value()\n    uniform_scale = nuke.thisNode().knob(\"uniform_scale\").value()\n\n\n    # create slice file name and path based on incoming geo file\n    directory = os.path.dirname(geo_file)\n    path_name, extension = os.path.splitext(geo_file)\n    geo_file_name = path_name.split(\"\\\\\")\n    geo_file_name = geo_file_name\[-1]\n    slice_file = os.path.join(\n        directory, geo_file_name + \"_\" + slice_name + \"_v01\" + extension\n    )\n\n\n\n    # version up if slice file already exists\n    while os.path.exists(slice_file) == True:\n        slice_file = str(slice_file)\n        version = slice_file\[-5:-3]\n        new_version = int(float(version)) + 1\n        new_version = str(new_version).zfill(2)\n        slice_file = os.path.join(\n            directory,\n            geo_file_name + \"_\" + slice_name + \"_v\" + new_version + extension,\n        )\n    \n    \n    # process geo via trimesh\n    # mesh slicing operations: (left, right, top, bottom, front, back)\n    mesh = trimesh.intersections.slice_mesh_plane(\n        mesh, \[-1, 0, 0], \[(translate\[0] + (scale\[0] * uniform_scale) / 2), 0, 0], face_index=None, cap=False, cached_dots=None\n    )\n    mesh = trimesh.intersections.slice_mesh_plane(\n        mesh, \[1, 0, 0], \[(translate\[0] - (scale\[0] * uniform_scale) / 2), 0, 0], face_index=None, cap=False, cached_dots=None\n    )\n    mesh = trimesh.intersections.slice_mesh_plane(\n        mesh, \[0, -1, 0], \[0, (translate\[1] + (scale\[1] * uniform_scale) / 2), 0], face_index=None, cap=False, cached_dots=None\n    )\n    mesh = trimesh.intersections.slice_mesh_plane(\n        mesh, \[0, 1, 0], \[0, (translate\[1] - (scale\[1] * uniform_scale) / 2), 0], face_index=None, cap=False, cached_dots=None\n    )\n    mesh = trimesh.intersections.slice_mesh_plane(\n        mesh, \[0, 0, -1], \[0, 0, (translate\[2] + (scale\[2] * uniform_scale) / 2)], face_index=None, cap=False, cached_dots=None\n    )\n    mesh = trimesh.intersections.slice_mesh_plane(\n        mesh, \[0, 0, 1], \[0, 0, (translate\[2] - (scale\[2] * uniform_scale) / 2)], face_index=None, cap=False, cached_dots=None\n    )\n\n\n\n    slice_obj = trimesh.exchange.obj.export_obj(\n        mesh,\n        include_normals=True,\n        include_color=False,\n        include_texture=False,\n        return_texture=False,\n        write_texture=False,\n        resolver=None,\n        digits=7,\n    )\n\n\n\n    with open(slice_file, \"w\") as f:\n        f.write(slice_obj)\n        nuke.root().begin()\n        nuke.nodes.ReadGeo(file= slice_file)\n\n\n\n    executionTime = time.time() - startTime\n    nuke.alert(\"Slice Complete! \\n Execution time: \" + str(int(executionTime)) + \" seconds.\")\nelse:\n    nuke.alert(\"Please connect a ReadGeo node with an .obj file.\")\n\n\n" +STARTLINE}
+ addUserKnob {26 ""}
+ addUserKnob {26 text1 l v5.0 T "written by sam winkler 4.24.22"}
+}
+ Constant {
+  inputs 0
+  channels rgb
+  color {0 0.2 0.4 0.3}
+  color_panelDropped true
+  name Constant1
+  xpos -215
+  ypos -366
+ }
+ Cube {
+  cube {{-.5 x1001 -0.9549999833 x1017 -0.5} {-.5 x1001 -0.6980000138 x1017 -1.049999952} {-.5 x1001 -1.13499999 x1017 -0.5} {.5 x1001 0.5 x1017 -1.00999999} {.5 x1001 0.5 x1017 0.5} {.5 x1001 0.5 x1017 0.9800000191}}
+  uniform_scale 500
+  name bounding_box
+  selected true
+  xpos -215
+  ypos -270
+  disable {{"bounding_box.selectable ? 0 : 1"}}
+ }
+ Output {
+  name Output1
+  xpos -215
+  ypos -208
+ }
+ Input {
+  inputs 0
+  name Input1
+  xpos -309
+  ypos -364
+ }
+end_group

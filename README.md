@@ -7,4 +7,4 @@ To install, place GeoSlice.nk and unzipped Trimesh folder in your Nuke Toolsets 
 
 To do: 
 
--- Refactor code to modify geo natively, without the need for Trimesh library.
+-- Refactor code to remove Trimesh dependency.
